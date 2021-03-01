@@ -3,7 +3,12 @@
 source "https://rubygems.org"
 gemspec
 
-gem "minitest"
 gem "pry"
 gem "rake"
 gem "rubocop"
+
+group :test do
+  gem "minitest"
+  gem "minitest-power_assert", require: "minitest/power_assert"
+  gem "minitest-reporters", require: "minitest/reporters"
+end
