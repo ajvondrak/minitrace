@@ -6,6 +6,8 @@ gemspec
 gem "pry"
 gem "rake"
 gem "rubocop"
+gem "rubocop-minitest"
+gem "rubocop-rake"
 
 group :test do
   gem "minitest"

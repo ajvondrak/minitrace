@@ -2,5 +2,6 @@
 
 require "minitrace/version"
 
+# A minimalist tracing framework.
 module Minitrace
 end
