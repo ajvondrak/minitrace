@@ -2,7 +2,7 @@
 
 Minitrace is a minimalist, vendor-agnostic distributed tracing framework. Instrument your code using structured events, then send those events to a configurable backend.
 
-## DISCLAIMER
+:warning: **DISCLAIMER** :warning:
 
 **For any serious project, you probably want to use [OpenTelemetry](https://github.com/open-telemetry/opentelemetry-ruby) or a vendor-specific library like the [Honeycomb Beeline](https://github.com/honeycombio/beeline-ruby/).**
 
