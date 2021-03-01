@@ -14,3 +14,11 @@ require "rubocop/rake_task"
 RuboCop::RakeTask.new
 
 task default: %i[test rubocop]
+
+desc "Run a console with minitrace loaded"
+task :console do
+  require "bundler/setup"
+  require "minitrace"
+  require "pry"
+  Pry.start
+end
