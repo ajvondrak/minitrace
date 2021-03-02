@@ -3,6 +3,7 @@
 require "minitrace/version"
 require "minitrace/backends"
 require "minitrace/event"
+require "minitrace/sync_error"
 
 # A minimalist tracing framework.
 module Minitrace
@@ -18,10 +19,13 @@ module Minitrace
     end
 
     def with_event
+      event = Minitrace::Event.new
       events << event
       yield
     ensure
-      events.pop.fire
+      pending = events.pop
+      raise Minitrace::SyncError.new(event, pending) unless event == pending
+      pending.fire
     end
 
     def add_field(field, value)

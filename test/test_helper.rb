@@ -11,6 +11,10 @@ class Minitest::Test
     Minitrace.backend = Minitrace::Backends::Spy.new
   end
 
+  def after_teardown
+    Minitrace.events.clear
+  end
+
   def processed
     Minitrace.backend.processed
   end

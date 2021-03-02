@@ -199,4 +199,13 @@ class MinitraceTest < Minitest::Test
     assert { processed.size == 1 }
     assert { processed.last.fields["thread"] == "safe" }
   end
+
+  def test_sync_error
+    assert_raises(Minitrace::SyncError) do
+      Minitrace.with_event do
+        # Let's say that somehow this happens
+        Minitrace.events << Minitrace.event
+      end
+    end
+  end
 end
