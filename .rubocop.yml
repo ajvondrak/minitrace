@@ -22,3 +22,15 @@ Style/StringLiteralsInInterpolation:
 
 Style/Documentation:
   Enabled: false # for now
+
+Metrics/AbcSize:
+  Exclude:
+    - test/**/*_test.rb
+
+Metrics/MethodLength:
+  Exclude:
+    - test/**/*_test.rb
+
+Metrics/ClassLength:
+  Exclude:
+    - test/**/*_test.rb
