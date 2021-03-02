@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitrace/version"
+require "minitrace/backends"
 require "minitrace/event"
 
 # A minimalist tracing framework.
