@@ -13,8 +13,12 @@ module Minitrace
       @events ||= []
     end
 
+    def event
+      Minitrace::Event.new
+    end
+
     def with_event
-      events << Minitrace::Event.new
+      events << event
       yield
     ensure
       events.pop.fire

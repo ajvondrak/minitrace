@@ -106,4 +106,87 @@ class MinitraceTest < Minitest::Test
     assert { processed[2].fields == { "d" => 3 } }
     assert { processed[3].fields == { "c" => 4 } }
   end
+
+  def test_async_event
+    async = Minitrace.event
+    assert { processed.empty? }
+    async.fire
+    assert { processed == [async] }
+  end
+
+  def test_add_field_is_synchronous
+    async = Minitrace.event
+    Minitrace.add_field("field", "value")
+    assert { async.fields.empty? }
+  end
+
+  def test_add_fields_is_synchronous
+    async = Minitrace.event
+    Minitrace.add_fields("field" => "value")
+    assert { async.fields.empty? }
+  end
+
+  def test_async_before_sync
+    Minitrace.event.add_field("type", "async").fire
+    Minitrace.with_event { Minitrace.add_field("type", "sync") }
+
+    assert { processed.size == 2 }
+    assert { processed[0].fields == { "type" => "async" } }
+    assert { processed[1].fields == { "type" => "sync" } }
+  end
+
+  def test_async_after_sync
+    Minitrace.with_event { Minitrace.add_field("type", "sync") }
+    Minitrace.event.add_field("type", "async").fire
+
+    assert { processed.size == 2 }
+    assert { processed[0].fields == { "type" => "sync" } }
+    assert { processed[1].fields == { "type" => "async" } }
+  end
+
+  def test_async_inside_sync
+    Minitrace.with_event do
+      Minitrace.add_field("type", "sync")
+      Minitrace.event.add_field("type", "async").fire
+    end
+
+    assert { processed.size == 2 }
+    assert { processed[0].fields == { "type" => "async" } }
+    assert { processed[1].fields == { "type" => "sync" } }
+  end
+
+  def test_async_outside_sync
+    async = Minitrace.event.add_field("type", "async")
+    Minitrace.with_event { Minitrace.add_field("type", "sync") }
+    async.fire
+
+    assert { processed.size == 2 }
+    assert { processed[0].fields == { "type" => "sync" } }
+    assert { processed[1].fields == { "type" => "async" } }
+  end
+
+  def test_async_overlap_sync_before
+    async = Minitrace.event.add_field("type", "async")
+    Minitrace.with_event do
+      Minitrace.add_field("type", "sync")
+      async.fire
+    end
+
+    assert { processed.size == 2 }
+    assert { processed[0].fields == { "type" => "async" } }
+    assert { processed[1].fields == { "type" => "sync" } }
+  end
+
+  def test_async_overlap_sync_after
+    async = nil
+    Minitrace.with_event do
+      async = Minitrace.event.add_field("type", "async")
+      Minitrace.add_field("type", "sync")
+    end
+    async.fire
+
+    assert { processed.size == 2 }
+    assert { processed[0].fields == { "type" => "sync" } }
+    assert { processed[1].fields == { "type" => "async" } }
+  end
 end
