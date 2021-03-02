@@ -10,7 +10,7 @@ module Minitrace
     attr_accessor :backend
 
     def events
-      @events ||= []
+      Thread.current["Minitrace.events"] ||= []
     end
 
     def event

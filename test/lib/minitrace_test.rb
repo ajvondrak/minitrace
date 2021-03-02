@@ -189,4 +189,14 @@ class MinitraceTest < Minitest::Test
     assert { processed[0].fields == { "type" => "sync" } }
     assert { processed[1].fields == { "type" => "async" } }
   end
+
+  def test_thread_safety
+    Minitrace.with_event do
+      Minitrace.add_field("thread", "safe")
+      Thread.new { Minitrace.add_field("thread", "unsafe") }.join
+    end
+
+    assert { processed.size == 1 }
+    assert { processed.last.fields["thread"] == "safe" }
+  end
 end
