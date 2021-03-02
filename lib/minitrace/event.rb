@@ -16,4 +16,10 @@ class Minitrace::Event
     @fields.merge!(fields)
     self
   end
+
+  def fire
+    return if @fired
+    Minitrace.backend.process(self)
+    @fired = true
+  end
 end

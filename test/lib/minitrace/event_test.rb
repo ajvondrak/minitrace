@@ -25,4 +25,20 @@ class Minitrace::EventTest < Minitest::Test
     assert { event.add_fields("b" => 3, "c" => 5) == event }
     assert { event.fields == { "a" => 1, "b" => 3, "c" => 5 } }
   end
+
+  def test_fire
+    event = Minitrace::Event.new
+    assert { processed.empty? }
+    event.fire
+    assert { processed == [event] }
+  end
+
+  def test_double_fire
+    event = Minitrace::Event.new
+    assert { processed.empty? }
+    event.fire
+    assert { processed == [event] }
+    event.fire
+    assert { processed == [event] }
+  end
 end
