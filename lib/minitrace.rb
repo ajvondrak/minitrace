@@ -28,8 +28,12 @@ module Minitrace
       pending.fire
     end
 
+    def span(name)
+      Minitrace::Span.new.add_field("name", name)
+    end
+
     def with_span(name, &block)
-      with_event(Minitrace::Span.new.add_field("name", name), &block)
+      with_event(span(name), &block)
     end
 
     def add_field(field, value)

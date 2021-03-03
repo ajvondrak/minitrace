@@ -327,4 +327,95 @@ class MinitraceTest < Minitest::Test
     assert { r["trace.parent_id"] == root["trace.span_id"] }
     refute { root.include?("trace.parent_id") }
   end
+
+  def test_async_spans
+    Minitrace.span("one").fire
+    Minitrace.span("two").fire
+
+    one, two = processed.map(&:fields)
+    assert { one["name"] == "one" && two["name"] == "two" }
+    assert { one["trace.trace_id"] != two["trace.trace_id"] }
+    assert { one["trace.span_id"] != two["trace.span_id"] }
+    refute { one.include?("trace.parent_id") }
+    refute { two.include?("trace.parent_id") }
+  end
+
+  def test_async_span_before_sync_span
+    Minitrace.span("one").fire
+    Minitrace.with_span("two") { :ok }
+
+    one, two = processed.map(&:fields)
+    assert { one["name"] == "one" && two["name"] == "two" }
+    assert { one["trace.trace_id"] != two["trace.trace_id"] }
+    assert { one["trace.span_id"] != two["trace.span_id"] }
+    refute { one.include?("trace.parent_id") }
+    refute { two.include?("trace.parent_id") }
+  end
+
+  def test_async_span_after_sync_span
+    Minitrace.with_span("one") { :ok }
+    Minitrace.span("two").fire
+
+    one, two = processed.map(&:fields)
+    assert { one["name"] == "one" && two["name"] == "two" }
+    assert { one["trace.trace_id"] != two["trace.trace_id"] }
+    assert { one["trace.span_id"] != two["trace.span_id"] }
+    refute { one.include?("trace.parent_id") }
+    refute { two.include?("trace.parent_id") }
+  end
+
+  def test_async_span_around_sync_span
+    two = Minitrace.span("two")
+    Minitrace.with_span("one") { :ok }
+    two.fire
+
+    one, two = processed.map(&:fields)
+    assert { one["name"] == "one" && two["name"] == "two" }
+    assert { one["trace.trace_id"] != two["trace.trace_id"] }
+    assert { one["trace.span_id"] != two["trace.span_id"] }
+    refute { one.include?("trace.parent_id") }
+    refute { two.include?("trace.parent_id") }
+  end
+
+  def test_async_span_within_sync_span
+    Minitrace.with_span("two") do
+      Minitrace.span("one").fire
+    end
+
+    one, two = processed.map(&:fields)
+    assert { one["name"] == "one" && two["name"] == "two" }
+    assert { one["trace.trace_id"] == two["trace.trace_id"] }
+    assert { one["trace.span_id"] != two["trace.span_id"] }
+    assert { one["trace.parent_id"] == two["trace.span_id"] }
+    refute { two.include?("trace.parent_id") }
+  end
+
+  def test_async_span_overlapping_before_sync_span
+    one = Minitrace.span("one")
+    Minitrace.with_span("two") do
+      one.fire
+    end
+
+    one, two = processed.map(&:fields)
+    assert { one["name"] == "one" && two["name"] == "two" }
+    assert { one["trace.trace_id"] != two["trace.trace_id"] }
+    assert { one["trace.span_id"] != two["trace.span_id"] }
+    refute { one.include?("trace.parent_id") }
+    refute { two.include?("trace.parent_id") }
+  end
+
+  def test_async_span_overlapping_after_sync_span
+    two = nil
+    Minitrace.with_span("one") do
+      two = Minitrace.span("two")
+    end
+    two.fire
+
+    one, two = processed.map(&:fields)
+    assert { one["name"] == "one" && two["name"] == "two" }
+    assert { one["trace.trace_id"] == two["trace.trace_id"] }
+    assert { one["trace.span_id"] != two["trace.span_id"] }
+    refute { one.include?("trace.parent_id") }
+    assert { two["trace.parent_id"] == one["trace.span_id"] }
+  end
 end
