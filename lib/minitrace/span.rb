@@ -6,7 +6,7 @@ class Minitrace::Span < Minitrace::Event
   def initialize
     super
     add_field("timestamp", Time.now)
-    add_field("trace.trace_id", trace_id)
+    add_fields(trace)
     @start = monotonic_time_ms
   end
 
@@ -22,7 +22,15 @@ class Minitrace::Span < Minitrace::Event
     Process.clock_gettime(Process::CLOCK_MONOTONIC, :float_millisecond)
   end
 
-  def trace_id
-    Minitrace.events.last&.fields&.dig("trace.trace_id") || SecureRandom.hex(16)
+  def parent(field)
+    Minitrace.events.last&.fields&.dig(field)
+  end
+
+  def trace
+    {
+      "trace.trace_id" => parent("trace.trace_id") || SecureRandom.hex(16),
+      "trace.parent_id" => parent("trace.span_id"),
+      "trace.span_id" => SecureRandom.hex(8),
+    }.compact
   end
 end

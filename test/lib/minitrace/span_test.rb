@@ -43,6 +43,8 @@ class Minitrace::SpanTest < Minitest::Test
     root = Minitrace::Span.new
 
     assert { root.fields["trace.trace_id"] =~ /\A\h{32}\z/ }
+    assert { root.fields["trace.span_id"] =~ /\A\h{16}\z/ }
+    refute { root.fields.include?("trace.parent_id") }
   end
 
   def test_tracing_leaf
@@ -51,7 +53,10 @@ class Minitrace::SpanTest < Minitest::Test
     leaf = Minitrace::Span.new
 
     assert { leaf.fields["trace.trace_id"] =~ /\A\h{32}\z/ }
+    assert { leaf.fields["trace.span_id"] =~ /\A\h{16}\z/ }
+    assert { leaf.fields["trace.parent_id"] =~ /\A\h{16}\z/ }
     assert { leaf.fields["trace.trace_id"] == root.fields["trace.trace_id"] }
+    assert { leaf.fields["trace.parent_id"] == root.fields["trace.span_id"] }
   end
 
   def test_tracing_from_nonspan_event
@@ -60,6 +65,9 @@ class Minitrace::SpanTest < Minitest::Test
     leaf = Minitrace::Span.new
 
     assert { leaf.fields["trace.trace_id"] =~ /\A\h{32}\z/ }
+    assert { leaf.fields["trace.span_id"] =~ /\A\h{16}\z/ }
+    refute { leaf.fields.include?("trace.parent_id") }
     refute { root.fields.include?("trace.trace_id") }
+    refute { root.fields.include?("trace.span_id") }
   end
 end
