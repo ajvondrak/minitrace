@@ -41,4 +41,12 @@ class Minitrace::EventTest < Minitest::Test
     event.fire
     assert { processed == [event] }
   end
+
+  def test_on_error
+    error = Class.new(StandardError)
+    event = Minitrace::Event.new
+    assert_raises(error) { event.on_error(error.new("zoinks")) }
+    assert { event.fields["error"] == error.name }
+    assert { event.fields["error_detail"] == "zoinks" }
+  end
 end

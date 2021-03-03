@@ -16,9 +16,11 @@ class MinitraceTest < Minitest::Test
   def test_with_event_error
     error = Class.new(StandardError)
     assert_raises(error) do
-      Minitrace.with_event { raise error }
+      Minitrace.with_event { raise error, "jinkies" }
     end
     assert { processed.size == 1 }
+    assert { processed.last.fields["error"] == error.name }
+    assert { processed.last.fields["error_detail"] == "jinkies" }
   end
 
   def test_add_field_outside_of_event
@@ -207,6 +209,7 @@ class MinitraceTest < Minitest::Test
         Minitrace.events << Minitrace.event
       end
     end
+    assert { processed.empty? }
   end
 
   def test_disjoint_spans

@@ -22,6 +22,8 @@ module Minitrace
     def with_event(event = Minitrace::Event.new)
       events << event
       yield
+    rescue => e
+      event.on_error(e)
     ensure
       pending = events.pop
       raise Minitrace::SyncError.new(event, pending) unless event == pending

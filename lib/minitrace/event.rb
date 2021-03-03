@@ -17,6 +17,12 @@ class Minitrace::Event
     self
   end
 
+  def on_error(error)
+    add_field("error", error.class.name)
+    add_field("error_detail", error.message)
+    raise error
+  end
+
   def fired?
     @fired
   end
