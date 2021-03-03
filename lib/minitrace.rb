@@ -3,6 +3,7 @@
 require "minitrace/version"
 require "minitrace/backends"
 require "minitrace/event"
+require "minitrace/span"
 require "minitrace/sync_error"
 
 # A minimalist tracing framework.

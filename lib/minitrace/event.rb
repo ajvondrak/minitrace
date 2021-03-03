@@ -17,8 +17,12 @@ class Minitrace::Event
     self
   end
 
+  def fired?
+    @fired
+  end
+
   def fire
-    return if @fired
+    return if fired?
     Minitrace.backend.process(self)
     @fired = true
   end
