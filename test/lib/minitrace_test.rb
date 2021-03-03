@@ -208,4 +208,123 @@ class MinitraceTest < Minitest::Test
       end
     end
   end
+
+  def test_disjoint_spans
+    Minitrace.with_span("a") { :ok }
+    Minitrace.with_span("b") { :ok }
+
+    names = processed.map { |event| event.fields["name"] }
+    assert { names == %w[a b] }
+
+    trace_ids = processed.map { |event| event.fields["trace.trace_id"] }
+    assert { trace_ids.compact.uniq.size == 2 }
+
+    span_ids = processed.map { |event| event.fields["trace.span_id"] }
+    assert { span_ids.compact.uniq.size == span_ids.size }
+
+    a, b = processed.map(&:fields)
+    refute { a.include?("trace.parent_id") }
+    refute { b.include?("trace.parent_id") }
+  end
+
+  def test_nested_spans
+    Minitrace.with_span("a") do
+      Minitrace.with_span("b") { :ok }
+    end
+
+    names = processed.map { |event| event.fields["name"] }
+    assert { names == %w[b a] }
+
+    trace_ids = processed.map { |event| event.fields["trace.trace_id"] }
+    assert { trace_ids.compact.uniq.size == 1 }
+
+    span_ids = processed.map { |event| event.fields["trace.span_id"] }
+    assert { span_ids.compact.uniq.size == span_ids.size }
+
+    b, a = processed.map(&:fields)
+    refute { a.include?("trace.parent_id") }
+    assert { b["trace.parent_id"] == a["trace.span_id"] }
+  end
+
+  def test_nested_disjoint_spans
+    Minitrace.with_span("a") do
+      Minitrace.with_span("b") { :ok }
+      Minitrace.with_span("c") { :ok }
+    end
+
+    names = processed.map { |event| event.fields["name"] }
+    assert { names == %w[b c a] }
+
+    trace_ids = processed.map { |event| event.fields["trace.trace_id"] }
+    assert { trace_ids.compact.uniq.size == 1 }
+
+    span_ids = processed.map { |event| event.fields["trace.span_id"] }
+    assert { span_ids.compact.uniq.size == span_ids.size }
+
+    b, c, a = processed.map(&:fields)
+    refute { a.include?("trace.parent_id") }
+    assert { b["trace.parent_id"] == a["trace.span_id"] }
+    assert { c["trace.parent_id"] == a["trace.span_id"] }
+  end
+
+  def test_disjoint_nested_spans
+    Minitrace.with_span("a") { Minitrace.with_span("b") { :ok } }
+    Minitrace.with_span("c") { Minitrace.with_span("d") { :ok } }
+
+    names = processed.map { |event| event.fields["name"] }
+    assert { names == %w[b a d c] }
+
+    b, a, d, c = processed.map { |event| event.fields["trace.trace_id"] }
+    assert { a == b && c == d && a != c }
+
+    span_ids = processed.map { |event| event.fields["trace.span_id"] }
+    assert { span_ids.compact.uniq.size == span_ids.size }
+
+    b, a, d, c = processed.map(&:fields)
+    refute { a.include?("trace.parent_id") }
+    assert { b["trace.parent_id"] == a["trace.span_id"] }
+    refute { c.include?("trace.parent_id") }
+    assert { d["trace.parent_id"] == c["trace.span_id"] }
+  end
+
+  def test_span_tree
+    Minitrace.with_span("root") do
+      Minitrace.add_field("type", "root")
+
+      Minitrace.with_span("l") do
+        Minitrace.add_field("type", "mid")
+        Minitrace.with_span("ll") { Minitrace.add_field("type", "leaf") }
+        Minitrace.with_span("lr") { Minitrace.add_field("type", "leaf") }
+      end
+
+      Minitrace.with_span("r") do
+        Minitrace.add_field("type", "mid")
+        Minitrace.with_span("rl") { Minitrace.add_field("type", "leaf") }
+        Minitrace.with_span("rr") { Minitrace.add_field("type", "leaf") }
+      end
+    end
+
+    assert { processed.size == 7 }
+
+    names = processed.map { |event| event.fields["name"] }
+    assert { names == %w[ll lr l rl rr r root] }
+
+    types = processed.map { |event| event.fields["type"] }
+    assert { types == %w[leaf leaf mid leaf leaf mid root] }
+
+    trace_ids = processed.map { |event| event.fields["trace.trace_id"] }
+    assert { trace_ids.compact.uniq.size == 1 }
+
+    span_ids = processed.map { |event| event.fields["trace.span_id"] }
+    assert { span_ids.compact.uniq.size == span_ids.size }
+
+    ll, lr, l, rl, rr, r, root = processed.map(&:fields)
+    assert { ll["trace.parent_id"] == l["trace.span_id"] }
+    assert { lr["trace.parent_id"] == l["trace.span_id"] }
+    assert { rl["trace.parent_id"] == r["trace.span_id"] }
+    assert { rr["trace.parent_id"] == r["trace.span_id"] }
+    assert { l["trace.parent_id"] == root["trace.span_id"] }
+    assert { r["trace.parent_id"] == root["trace.span_id"] }
+    refute { root.include?("trace.parent_id") }
+  end
 end

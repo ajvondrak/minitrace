@@ -19,14 +19,17 @@ module Minitrace
       Minitrace::Event.new
     end
 
-    def with_event
-      event = Minitrace::Event.new
+    def with_event(event = Minitrace::Event.new)
       events << event
       yield
     ensure
       pending = events.pop
       raise Minitrace::SyncError.new(event, pending) unless event == pending
       pending.fire
+    end
+
+    def with_span(name, &block)
+      with_event(Minitrace::Span.new.add_field("name", name), &block)
     end
 
     def add_field(field, value)
