@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Minitrace::Backends::Spy < Minitrace::Backend
+class Minitrace::Backends::Spy
   def processed
     @processed ||= []
   end

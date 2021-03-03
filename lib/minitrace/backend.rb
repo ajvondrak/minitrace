@@ -1,7 +1,20 @@
 # frozen_string_literal: true
 
 class Minitrace::Backend
+  attr_reader :processors
+
+  def initialize(&block)
+    @processors = []
+    instance_eval(&block)
+  end
+
+  def use(processor, *args, **opts, &block)
+    processors << processor.new(*args, **opts, &block)
+  end
+
   def process(event)
-    raise NotImplementedError
+    processors.each do |processor|
+      processor.process(event)
+    end
   end
 end

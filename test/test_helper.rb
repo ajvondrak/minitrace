@@ -8,7 +8,9 @@ Minitest::Reporters.use! Minitest::Reporters::DefaultReporter.new
 
 class Minitest::Test
   def before_setup
-    Minitrace.backend = Minitrace::Backends::Spy.new
+    Minitrace.backend = Minitrace::Backend.new do
+      use Minitrace::Backends::Spy
+    end
   end
 
   def after_teardown
@@ -16,7 +18,7 @@ class Minitest::Test
   end
 
   def processed
-    Minitrace.backend.processed
+    Minitrace.backend.processors.last.processed
   end
 end
 

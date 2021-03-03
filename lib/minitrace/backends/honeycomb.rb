@@ -2,11 +2,10 @@
 
 Minitrace::Integrations.require("libhoney")
 
-class Minitrace::Backends::Honeycomb < Minitrace::Backend
+class Minitrace::Backends::Honeycomb
   attr_reader :client
 
   def initialize(client: nil, **options)
-    super()
     @client = client || Libhoney::Client.new(**options)
   end
 
