@@ -38,4 +38,28 @@ class Minitrace::SpanTest < Minitest::Test
       assert_in_epsilon 30.87, span.fields["duration_ms"]
     end
   end
+
+  def test_tracing_root
+    root = Minitrace::Span.new
+
+    assert { root.fields["trace.trace_id"] =~ /\A\h{32}\z/ }
+  end
+
+  def test_tracing_leaf
+    root = Minitrace::Span.new
+    Minitrace.events << root
+    leaf = Minitrace::Span.new
+
+    assert { leaf.fields["trace.trace_id"] =~ /\A\h{32}\z/ }
+    assert { leaf.fields["trace.trace_id"] == root.fields["trace.trace_id"] }
+  end
+
+  def test_tracing_from_nonspan_event
+    root = Minitrace::Event.new
+    Minitrace.events << root
+    leaf = Minitrace::Span.new
+
+    assert { leaf.fields["trace.trace_id"] =~ /\A\h{32}\z/ }
+    refute { root.fields.include?("trace.trace_id") }
+  end
 end
