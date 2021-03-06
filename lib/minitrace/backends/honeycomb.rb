@@ -1,12 +1,6 @@
 # frozen_string_literal: true
 
-begin
-  require "libhoney"
-rescue LoadError
-  raise LoadError, <<~MSG
-    Could not load the libhoney gem. Use `gem install libhoney` to install it.
-  MSG
-end
+Minitrace::Integrations.require("libhoney")
 
 class Minitrace::Backends::Honeycomb < Minitrace::Backend
   attr_reader :client
