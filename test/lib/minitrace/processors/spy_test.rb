@@ -2,9 +2,9 @@
 
 require "test_helper"
 
-class Minitrace::Backends::SpyTest < Minitest::Test
+class Minitrace::Processors::SpyTest < Minitest::Test
   def test_process
-    spy = Minitrace::Backends::Spy.new
+    spy = Minitrace::Processors::Spy.new
 
     a = Minitrace::Event.new
     spy.process(a)

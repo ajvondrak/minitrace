@@ -2,7 +2,7 @@
 
 require "minitrace/version"
 require "minitrace/integrations"
-require "minitrace/backends"
+require "minitrace/backend"
 require "minitrace/event"
 require "minitrace/span"
 require "minitrace/sync_error"

@@ -5,9 +5,9 @@ require "test_helper"
 class Minitrace::BackendTest < Minitest::Test
   def backend
     @backend ||= Minitrace::Backend.new do
-      use Minitrace::Backends::Spy
-      use Minitrace::Backends::Spy
-      use Minitrace::Backends::Spy
+      use Minitrace::Processors::Spy
+      use Minitrace::Processors::Spy
+      use Minitrace::Processors::Spy
     end
   end
 

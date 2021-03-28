@@ -9,7 +9,7 @@ Minitest::Reporters.use! Minitest::Reporters::DefaultReporter.new
 class Minitest::Test
   def before_setup
     Minitrace.backend = Minitrace::Backend.new do
-      use Minitrace::Backends::Spy
+      use Minitrace::Processors::Spy
     end
   end
 

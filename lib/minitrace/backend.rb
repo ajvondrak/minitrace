@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "minitrace/processors"
+
 class Minitrace::Backend
   attr_reader :processors
 
