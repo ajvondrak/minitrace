@@ -21,6 +21,9 @@ Style/ClassAndModuleChildren:
   Enabled: true
   EnforcedStyle: compact
 
+Style/NumericPredicate:
+  Enabled: false
+
 Style/StringLiterals:
   Enabled: true
   EnforcedStyle: double_quotes
