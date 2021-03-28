@@ -51,4 +51,16 @@ class Minitrace::Processors::HoneycombTest < Minitest::Test
     assert { honey.client.events.last.data == { "lib" => "hny" } }
     assert { event.fields == { "timestamp" => Time.at(456), "lib" => "hny" } }
   end
+
+  def test_process_with_sample_rate
+    event = Minitrace::Event.new
+    event.add_field("sample_rate", 8_675_309)
+    event.add_field("lib", "hny")
+
+    honey.process(event)
+
+    assert { honey.client.events.size == 1 }
+    assert { honey.client.events.last.sample_rate == 8_675_309 }
+    assert { honey.client.events.last.data == { "lib" => "hny" } }
+  end
 end

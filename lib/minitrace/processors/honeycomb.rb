@@ -13,7 +13,8 @@ class Minitrace::Processors::Honeycomb
     fields = event.fields.dup
     hny = @client.event
     hny.timestamp = fields.delete("timestamp") || Time.now
+    hny.sample_rate = fields.delete("sample_rate") || 1
     hny.add(fields)
-    hny.send
+    hny.send_presampled
   end
 end
