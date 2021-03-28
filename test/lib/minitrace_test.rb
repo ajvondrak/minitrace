@@ -421,4 +421,33 @@ class MinitraceTest < Minitest::Test
     refute { one.include?("trace.parent_id") }
     assert { two["trace.parent_id"] == one["trace.span_id"] }
   end
+
+  class Tail < self
+    def before_setup
+      super
+      Minitrace.backend.mode(:tail)
+    end
+
+    def test_async_span_overlapping_after_sync_span
+      two = nil
+      Minitrace.with_span("one") do
+        two = Minitrace.span("two")
+      end
+      two.fire
+
+      assert { processed.size == 1 }
+      assert { processed.last.fields["name"] == "one" }
+
+      Minitrace.backend.flush
+
+      assert { processed.size == 2 }
+      one, two = processed.map(&:fields)
+
+      assert { one["name"] == "one" && two["name"] == "two" }
+      assert { one["trace.trace_id"] == two["trace.trace_id"] }
+      assert { one["trace.span_id"] != two["trace.span_id"] }
+      refute { one.include?("trace.parent_id") }
+      assert { two["trace.parent_id"] == one["trace.span_id"] }
+    end
+  end
 end
