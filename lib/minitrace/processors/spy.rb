@@ -5,7 +5,7 @@ class Minitrace::Processors::Spy
     @processed ||= []
   end
 
-  def process(event)
-    processed << event
+  def process(events)
+    processed.append(*events)
   end
 end

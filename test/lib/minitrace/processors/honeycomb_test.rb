@@ -28,7 +28,7 @@ class Minitrace::Processors::HoneycombTest < Minitest::Test
     event.add_field("lib", "hny")
 
     Time.stub(:now, Time.at(123)) do
-      honey.process(event)
+      honey.process([event])
     end
 
     assert { honey.client.events.size == 1 }
@@ -43,7 +43,7 @@ class Minitrace::Processors::HoneycombTest < Minitest::Test
     event.add_field("lib", "hny")
 
     Time.stub(:now, Time.at(123)) do
-      honey.process(event)
+      honey.process([event])
     end
 
     assert { honey.client.events.size == 1 }
@@ -57,10 +57,44 @@ class Minitrace::Processors::HoneycombTest < Minitest::Test
     event.add_field("sample_rate", 8_675_309)
     event.add_field("lib", "hny")
 
-    honey.process(event)
+    honey.process([event])
 
     assert { honey.client.events.size == 1 }
     assert { honey.client.events.last.sample_rate == 8_675_309 }
     assert { honey.client.events.last.data == { "lib" => "hny" } }
+  end
+
+  def test_trace
+    root = Minitrace::Event.new.add_fields(
+      "name" => "root",
+      "timestamp" => Time.at(123),
+      "sample_rate" => 123,
+    )
+    leaf = Minitrace::Event.new.add_fields(
+      "name" => "leaf",
+      "timestamp" => Time.at(456),
+    )
+    special = Minitrace::Event.new.add_fields(
+      "name" => "special",
+      "sample_rate" => 789,
+    )
+
+    Time.stub(:now, Time.at(789)) do
+      honey.process([special, leaf, root])
+    end
+
+    assert { honey.client.events.size == 3 }
+
+    assert { honey.client.events[0].data == { "name" => "special" } }
+    assert { honey.client.events[0].timestamp == Time.at(789) }
+    assert { honey.client.events[0].sample_rate == 789 }
+
+    assert { honey.client.events[1].data == { "name" => "leaf" } }
+    assert { honey.client.events[1].timestamp == Time.at(456) }
+    assert { honey.client.events[1].sample_rate == 123 }
+
+    assert { honey.client.events[2].data == { "name" => "root" } }
+    assert { honey.client.events[2].timestamp == Time.at(123) }
+    assert { honey.client.events[2].sample_rate == 123 }
   end
 end

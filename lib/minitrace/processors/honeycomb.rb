@@ -9,12 +9,15 @@ class Minitrace::Processors::Honeycomb
     @client = client || Libhoney::Client.new(**options)
   end
 
-  def process(event)
-    fields = event.fields.dup
-    hny = @client.event
-    hny.timestamp = fields.delete("timestamp") || Time.now
-    hny.sample_rate = fields.delete("sample_rate") || 1
-    hny.add(fields)
-    hny.send_presampled
+  def process(events)
+    rate = events.last.fields["sample_rate"] || 1
+    events.each do |event|
+      fields = event.fields.dup
+      hny = @client.event
+      hny.timestamp = fields.delete("timestamp") || Time.now
+      hny.sample_rate = fields.delete("sample_rate") || rate
+      hny.add(fields)
+      hny.send_presampled
+    end
   end
 end

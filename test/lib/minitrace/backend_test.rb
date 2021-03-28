@@ -23,8 +23,8 @@ class Minitrace::BackendTest < Minitest::Test
     return @drop if defined?(@drop)
 
     processor = Class.new do
-      def process(event)
-        throw :drop if event.fields["drop"]
+      def process(events)
+        throw :drop if events.last.fields["drop"]
       end
     end
 

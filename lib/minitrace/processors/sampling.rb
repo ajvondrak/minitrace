@@ -5,7 +5,8 @@ require "digest"
 class Minitrace::Processors::Sampling
   MAXINT = 2**32 - 1
 
-  def process(event)
+  def process(events)
+    event = events.last
     rate = event.fields["sample_rate"] || 1
     return if rate == 1
     throw :drop if rate == 0

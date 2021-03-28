@@ -17,7 +17,7 @@ class Minitrace::Backend
   def process(event)
     catch(:drop) do
       processors.each do |processor|
-        processor.process(event)
+        processor.process([event])
       end
     end
   end
