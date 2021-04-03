@@ -3,15 +3,12 @@
 require "test_helper"
 
 class Minitrace::Processors::SamplingTest < Minitest::Test
-  def backend
-    @backend ||= Minitrace::Backend.new do
+  def before_setup
+    super
+    Minitrace.backend = Minitrace::Backend.new do
       use Minitrace::Processors::Sampling
       use Minitrace::Processors::Spy
     end
-  end
-
-  def spy
-    backend.processors.last
   end
 
   SEND = %w[
@@ -31,24 +28,30 @@ class Minitrace::Processors::SamplingTest < Minitest::Test
   ].freeze
 
   def test_deterministic_send
+    Minitrace.backend.mode(:head)
+
     SEND.each do |id|
       event = Minitrace::Event.new.add_fields(
         "sample_rate" => 2,
         "trace.trace_id" => id,
       )
-      backend.process(event)
-      assert { spy.processed == [event] }
-      spy.processed.clear
+      Minitrace.backend.process(event)
+      assert { processed == [event] }
+      processed.clear
     end
   end
 
   def test_always_send
-    event = Minitrace::Event.new.add_fields(
-      "sample_rate" => 1,
-      "trace.trace_id" => SecureRandom.hex(16),
-    )
-    backend.process(event)
-    assert { spy.processed == [event] }
+    %i[head tail].each do |mode|
+      Minitrace.backend.mode(mode)
+      event = Minitrace::Event.new.add_fields(
+        "sample_rate" => 1,
+        "trace.trace_id" => SecureRandom.hex(16),
+      )
+      Minitrace.backend.process(event)
+      assert { processed == [event] }
+      processed.clear
+    end
   end
 
   DROP = %w[
@@ -69,22 +72,41 @@ class Minitrace::Processors::SamplingTest < Minitest::Test
   ].freeze
 
   def test_deterministic_drop
+    Minitrace.backend.mode(:head)
+
     DROP.each do |id|
       event = Minitrace::Event.new.add_fields(
         "sample_rate" => 2,
         "trace.trace_id" => id,
       )
-      backend.process(event)
-      assert { spy.processed.empty? }
+      Minitrace.backend.process(event)
+      assert { processed.empty? }
     end
   end
 
   def test_always_drop
+    %i[head tail].each do |mode|
+      Minitrace.backend.mode(mode)
+      event = Minitrace::Event.new.add_fields(
+        "sample_rate" => 0,
+        "trace.trace_id" => SecureRandom.hex(16),
+      )
+      Minitrace.backend.process(event)
+      assert { processed.empty? }
+      processed.clear
+    end
+  end
+
+  def test_nondeterminism
+    Minitrace.backend.mode(:tail)
+    seed = srand(0)
     event = Minitrace::Event.new.add_fields(
-      "sample_rate" => 0,
+      "sample_rate" => 10,
       "trace.trace_id" => SecureRandom.hex(16),
     )
-    backend.process(event)
-    assert { spy.processed.empty? }
+    10.times { Minitrace.backend.process(event) }
+    assert { processed == [event] }
+  ensure
+    srand(seed)
   end
 end
