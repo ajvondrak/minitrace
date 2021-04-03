@@ -17,8 +17,8 @@ class Minitrace::Backend
     @mode = mode
   end
 
-  def use(processor, *args, **opts, &block)
-    processors << processor.new(*args, **opts, &block)
+  def use(processor, *args, &block)
+    processors << processor.new(*args, &block)
   end
 
   def process(event)
