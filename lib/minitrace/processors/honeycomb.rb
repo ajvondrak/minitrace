@@ -7,6 +7,7 @@ class Minitrace::Processors::Honeycomb
 
   def initialize(client: nil, **options)
     @client = client || Libhoney::Client.new(**options)
+    at_exit { @client.close }
   end
 
   def process(events)
